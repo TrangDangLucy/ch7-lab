@@ -1,0 +1,681 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Efficient Diversification Lab</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&display=swap">
+<style>
+/* Layout concept: sticky section index on the left, one lab per section (sliders drive redrawn figures), each followed by a plain-English figure decoder. */
+:root{
+  --bg:#f3f5f8;--surface:#ffffff;--surface2:#edf1f6;--ink:#0f1b26;--ink2:#46556a;--line:#d5dce5;--grid:#e3e8ee;--axis:#97a4b3;
+  --accent:#1c5fd4;--accent-soft:#e3edfc;--warm:#cf4f1c;--warm-soft:#fbe9e0;--good:#0e7d58;--good-soft:#dff3ea;--bad:#b3261e;
+  --f-head:'Source Serif 4',Georgia,'Times New Roman',serif;--f-body:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif;--f-mono:'IBM Plex Mono',ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0c141b;--surface:#141e28;--surface2:#1b2733;--ink:#e6edf4;--ink2:#9fb0c1;--line:#2b3949;--grid:#233040;--axis:#52647a;
+  --accent:#6aa6ff;--accent-soft:#17304f;--warm:#f28a5c;--warm-soft:#3a2418;--good:#43cc9f;--good-soft:#123a2e;--bad:#ff8a80;color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0c141b;--surface:#141e28;--surface2:#1b2733;--ink:#e6edf4;--ink2:#9fb0c1;--line:#2b3949;--grid:#233040;--axis:#52647a;
+  --accent:#6aa6ff;--accent-soft:#17304f;--warm:#f28a5c;--warm-soft:#3a2418;--good:#43cc9f;--good-soft:#123a2e;--bad:#ff8a80;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.62 var(--f-body);-webkit-text-size-adjust:100%}
+.wrap{max-width:1140px;margin:0 auto;padding-inline:16px}
+a{color:var(--accent)}
+code,.mono{font-family:var(--f-mono);font-size:.92em}
+header.top{padding-block:34px 26px;border-bottom:1px solid var(--line)}
+.kicker{font:500 12px var(--f-mono);letter-spacing:.09em;text-transform:uppercase;color:var(--accent);margin:0 0 10px}
+h1{font:600 clamp(30px,5.4vw,46px)/1.08 var(--f-head);margin:0 0 12px;text-wrap:balance;max-width:20ch}
+.lede{font-size:18px;color:var(--ink2);max-width:62ch;margin:0 0 20px}
+.data{display:flex;flex-wrap:wrap;gap:8px 10px;margin:0;padding:0;list-style:none}
+.data li{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 12px;font-size:13px;color:var(--ink2)}
+.data b{font:500 14px var(--f-mono);color:var(--ink);display:block}
+.layout{display:grid;grid-template-columns:190px minmax(0,1fr);gap:36px;padding-block:8px 60px}
+nav.side{position:sticky;top:16px;align-self:start;padding-top:28px}
+nav.side p{font:500 11px var(--f-mono);letter-spacing:.09em;text-transform:uppercase;color:var(--ink2);margin:0 0 10px}
+nav.side a{display:block;text-decoration:none;color:var(--ink);padding:7px 10px;border-radius:6px;font-size:14px;line-height:1.35}
+nav.side a span{font:500 12px var(--f-mono);color:var(--accent);display:inline-block;min-width:30px}
+nav.side a:hover,nav.side a:focus-visible{background:var(--surface2);outline:none}
+main{min-width:0}
+section{padding-block:40px 8px;border-top:1px solid var(--line);scroll-margin-top:12px}
+section:first-child{border-top:0;padding-top:30px}
+.tag{font:500 12px var(--f-mono);letter-spacing:.09em;color:var(--accent);margin:0 0 6px;text-transform:uppercase}
+h2{font:600 clamp(24px,3.6vw,32px)/1.15 var(--f-head);margin:0 0 12px;text-wrap:balance}
+h3{font:600 17px/1.3 var(--f-body);margin:22px 0 8px}
+p{margin:0 0 12px;max-width:68ch}
+.flow{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0 6px;padding:0;list-style:none}
+.flow li a{display:block;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px 14px;text-decoration:none;color:var(--ink);font-size:14px;min-width:150px}
+.flow li a:hover,.flow li a:focus-visible{border-color:var(--accent);outline:none}
+.flow small{display:block;color:var(--ink2);font-size:12px}
+.flow li+li a::before{content:"\2192";color:var(--ink2);margin-right:6px}
+.lab{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px;margin:18px 0}
+.lab>h3:first-child{margin-top:0}
+.ctl{display:grid;gap:10px;margin-bottom:14px}
+.row{display:grid;grid-template-columns:170px minmax(0,1fr) 78px;gap:12px;align-items:center}
+.row label{font-size:14px;color:var(--ink2)}
+.row output{font:500 14px var(--f-mono);text-align:right}
+input[type=range]{width:100%;accent-color:var(--accent);margin:0;min-width:0}
+.chk{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--ink2)}
+.btns{display:flex;flex-wrap:wrap;gap:8px;margin:2px 0 4px}
+.btn{font:500 13px var(--f-body);padding:7px 12px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink);cursor:pointer}
+.btn:hover{border-color:var(--accent)}
+.btn:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(138px,1fr));gap:10px;margin:12px 0}
+.stat{background:var(--surface2);border-radius:8px;padding:10px 12px;min-width:0}
+.stat small{display:block;color:var(--ink2);font-size:12px;line-height:1.3;margin-bottom:2px}
+.stat b{font:500 19px var(--f-mono);font-variant-numeric:tabular-nums}
+.stat.hl{background:var(--accent-soft)}
+.stat.good{background:var(--good-soft)}
+.stat.warm{background:var(--warm-soft)}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,330px),1fr));gap:18px;align-items:start}
+.fig{min-width:0}
+.fig h4{font:500 13px var(--f-mono);margin:0 0 4px;letter-spacing:.02em}
+.plot svg{display:block;max-width:100%;height:auto}
+.leg{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12px;color:var(--ink2);margin:6px 0 4px}
+.leg i{display:inline-block;vertical-align:middle;margin-right:5px}
+.sw{width:10px;height:10px;border-radius:2px}
+.swl{width:18px;height:0;border-top:2.5px solid}
+.swd{width:18px;height:0;border-top:2px dashed}
+.note{font-size:13px;color:var(--ink2);margin:8px 0 0}
+.decode{margin:20px 0 6px;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--line)}
+.decode>header{background:var(--surface2);padding:10px 16px;font:500 12px var(--f-mono);letter-spacing:.09em;text-transform:uppercase;color:var(--ink2)}
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,250px),1fr));gap:1px}
+.steps>div{background:var(--surface);padding:14px 16px}
+.steps b{display:block;font:500 12px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px;color:var(--accent)}
+.steps .trap b{color:var(--warm)}
+.steps p{font-size:14.5px;margin:0 0 8px}
+.steps p:last-child{margin-bottom:0}
+.split{display:flex;height:26px;border-radius:6px;overflow:hidden;font:500 12px/26px var(--f-mono);margin:10px 0 2px}
+.split span{white-space:nowrap;overflow:hidden;padding-inline:8px;min-width:0}
+.split .u{background:var(--accent-soft);color:var(--accent)}
+.split .m{background:var(--warm-soft);color:var(--warm)}
+.bars{display:grid;gap:7px;margin:8px 0}
+.bar{display:grid;grid-template-columns:96px minmax(0,1fr) 64px;gap:10px;align-items:center;font-size:13px}
+.bar span:last-child{font:500 13px var(--f-mono);text-align:right}
+.track{position:relative;height:14px;background:var(--surface2);border-radius:4px}
+.track i{position:absolute;top:0;bottom:0;border-radius:3px;background:var(--accent)}
+.track i.neg{background:var(--warm)}
+.track i.g{background:var(--good)}
+.track.c::after{content:"";position:absolute;left:50%;top:-2px;bottom:-2px;width:1px;background:var(--axis)}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+.tw{overflow-x:auto;max-width:100%}
+th,td{padding:7px 10px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+th:first-child,td:first-child{text-align:left;white-space:normal}
+th{font:500 12px var(--f-mono);color:var(--ink2);letter-spacing:.04em}
+td{font-variant-numeric:tabular-nums}
+.eqs{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:12px}
+.eq{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;min-width:0}
+.eq small{font:500 11px var(--f-mono);color:var(--accent);letter-spacing:.06em;display:block;margin-bottom:4px}
+.eq code{display:block;font-size:14px;margin:2px 0 6px;overflow-wrap:anywhere}
+.eq p{font-size:13.5px;color:var(--ink2);margin:0}
+dl.gl{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:10px 28px;margin:0}
+dl.gl div{break-inside:avoid;border-top:1px solid var(--line);padding-top:8px}
+dl.gl dt{font-weight:600;font-size:14.5px}
+dl.gl dd{margin:2px 0 0;font-size:14px;color:var(--ink2)}
+ul.take{padding-left:20px;margin:0;max-width:68ch}
+ul.take li{margin-bottom:8px}
+footer{border-top:1px solid var(--line);padding-block:24px 40px;font-size:13px;color:var(--ink2)}
+footer p{max-width:80ch}
+svg text{font:11px var(--f-body);fill:var(--ink2)}
+svg text.lb{fill:var(--ink);font-weight:500}
+svg text.lbw{fill:var(--warm);font-weight:500}
+svg text.lbg{fill:var(--good);font-weight:500}
+svg text.lba{fill:var(--accent);font-weight:500}
+svg .g{stroke:var(--grid);stroke-width:1}
+svg .ax{stroke:var(--axis);stroke-width:1}
+svg .band{fill:var(--warm-soft);opacity:.55}
+svg .ln{fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+svg .ln.a{stroke:var(--accent)}
+svg .ln.g{stroke:var(--good);stroke-width:3}
+svg .ln.w{stroke:var(--warm);stroke-width:1.8}
+svg .ln.r{stroke:var(--ink2);stroke-width:1.6;stroke-dasharray:6 4}
+svg .ln.f{stroke:var(--axis);stroke-width:1.4;stroke-dasharray:2 4}
+svg .ln.d{stroke:var(--accent);stroke-width:2;stroke-dasharray:6 4;opacity:.9}
+svg .dt{stroke:var(--surface);stroke-width:2}
+svg .dt.a{fill:var(--accent)}
+svg .dt.w{fill:var(--warm)}
+svg .dt.g{fill:var(--good)}
+svg .dt.k{fill:var(--ink)}
+svg .dt.m{fill:var(--axis)}
+@media (max-width:900px){
+  .layout{grid-template-columns:minmax(0,1fr);gap:0}
+  nav.side{position:sticky;top:env(safe-area-inset-top,0px);z-index:10;background:var(--bg);padding:8px 0;display:flex;gap:6px;overflow-x:auto;border-bottom:1px solid var(--line)}
+  nav.side p{display:none}
+  nav.side a{white-space:nowrap;border:1px solid var(--line);background:var(--surface)}
+}
+@media (max-width:620px){
+  .row{grid-template-columns:minmax(0,1fr) 70px}
+  .row label{grid-column:1/-1}
+  .row input{grid-column:1}
+  .bar{grid-template-columns:78px minmax(0,1fr) 58px}
+  .lab{padding:14px}
+  .flow li a{min-width:0}
+}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style>
+<header class="top"><div class="wrap">
+  <p class="kicker">Investments &middot; Chapter 7</p>
+  <h1>Efficient Diversification Lab</h1>
+  <p class="lede">Every figure in the chapter, redrawn so you can move the sliders and watch what changes. Each lab is followed by a plain-English guide to reading the figure.</p>
+  <ul class="data" aria-label="Running example from Table 7.1">
+    <li>Bond fund D<b>E(r) 8% &middot; &sigma; 12%</b></li>
+    <li>Stock fund E<b>E(r) 13% &middot; &sigma; 20%</b></li>
+    <li>Correlation<b>&rho; = 0.30</b></li>
+    <li>Covariance<b>72</b></li>
+    <li>T-bill rate<b>5%</b></li>
+  </ul>
+</div></header>
+
+<div class="wrap layout">
+<nav class="side" aria-label="Sections">
+  <p>Sections</p>
+  <a href="#intro"><span>&bull;</span>Overview</a>
+  <a href="#s71"><span>7.1</span>Diversification and risk</a>
+  <a href="#s72"><span>7.2</span>Two risky assets</a>
+  <a href="#s73"><span>7.3</span>Adding T-bills</a>
+  <a href="#s74"><span>7.4</span>Markowitz model</a>
+  <a href="#s75"><span>7.5</span>Pooling, sharing, time</a>
+  <a href="#ref"><span>Ref</span>Equations and terms</a>
+</nav>
+
+<main>
+<section id="intro">
+  <p class="tag">Overview</p>
+  <h2>The chapter in five moves</h2>
+  <p>The chapter tells one story and reuses one example. Start with why spreading money across stocks lowers risk, then work out exactly how, first with two funds, then with a risk-free asset, then with many assets. It ends by showing what diversification does not do.</p>
+  <ul class="flow">
+    <li><a href="#s71"><b>7.1</b><small>Why diversify</small></a></li>
+    <li><a href="#s72"><b>7.2</b><small>Two risky funds</small></a></li>
+    <li><a href="#s73"><b>7.3</b><small>Add T-bills</small></a></li>
+    <li><a href="#s74"><b>7.4</b><small>Many assets</small></a></li>
+    <li><a href="#s75"><b>7.5</b><small>Limits of the idea</small></a></li>
+  </ul>
+  <p class="note">How to use this page: every lab recalculates as you drag. Under each lab, the box called &ldquo;How to read it&rdquo; explains the axes, the curve, and the most common misreading. Numbers match the chapter&rsquo;s tables, so you can check the page against the book.</p>
+</section>
+
+<section id="s71">
+  <p class="tag">Section 7.1</p>
+  <h2>Diversification and portfolio risk</h2>
+  <p>One stock carries two kinds of risk. <b>Market risk</b> comes from the whole economy: the business cycle, inflation, interest rates, exchange rates. <b>Unique risk</b> belongs to the firm: its research results, a change of key staff. Holding more stocks cancels more of the unique risk. Market risk hits every stock, so it stays.</p>
+  <p>Other names you will meet: market risk is also <i>systematic</i> or <i>nondiversifiable</i> risk. Unique risk is also <i>firm-specific</i>, <i>nonsystematic</i> or <i>diversifiable</i> risk.</p>
+  <div class="lab">
+    <h3>Lab: how fast does risk fall as you add stocks?</h3>
+    <p class="note" style="margin-top:0">Assumption from Eq. 7.21: every stock has &sigma; = 50% and every pair of stocks has the same correlation &rho;. Equal weights.</p>
+    <div class="ctl">
+      <div class="row"><label for="s1n">Number of stocks, n</label><input id="s1n" type="range" min="1" max="100" step="1" value="25"><output id="s1nv"></output></div>
+      <div class="row"><label for="s1r">Correlation between any two stocks, &rho;</label><input id="s1r" type="range" min="0" max="0.8" step="0.05" value="0.4"><output id="s1rv"></output></div>
+    </div>
+    <div class="btns"><button class="btn" data-set="s1r:0">&rho; = 0 (all risk is unique)</button><button class="btn" data-set="s1r:0.4">&rho; = 0.4 (Table 7.4)</button><button class="btn" data-set="s1n:100">n = 100</button></div>
+    <div class="stats" id="s1stats"></div>
+    <div id="s1split" aria-label="Split of portfolio variance into unique and market parts"></div>
+    <div class="leg"><span><i class="swl" style="border-color:var(--accent)"></i>Portfolio &sigma; at your &rho;</span><span><i class="swd" style="border-color:var(--ink2)"></i>&rho; = 0 for comparison</span><span><i class="swd" style="border-color:var(--warm)"></i>Floor set by market risk</span></div>
+    <div class="plot" id="s1plot"></div>
+  </div>
+  <div class="decode"><header>How to read it &middot; Figures 7.1 and 7.2</header><div class="steps">
+    <div><b>Axes</b><p>Horizontal: the number of stocks in the portfolio, n. Vertical: portfolio risk, the standard deviation &sigma; of its return.</p><p>Figure 7.2 uses real NYSE data: a single random stock has &sigma; of about 27.8% a year, and a well-spread portfolio falls to about 17.4%.</p></div>
+    <div><b>The curve</b><p>In Figure 7.1 Panel A all risk is firm-specific, so the curve keeps falling toward zero. In Panel B some risk is marketwide, so the curve bends and goes flat.</p><p>The gap between the curve and the flat floor is unique risk, and diversification removes it. The floor is market risk. In the lab above, the floor is &radic;&rho; &times; 50%.</p></div>
+    <div class="trap"><b>Watch out</b><p>A flat curve does not mean the extra stocks are useless. It means what is left is shared by all stocks.</p><p>Diversifying also means dividing a fixed amount of money across assets. Adding fresh money to more assets is a different thing (see 7.5).</p></div>
+  </div></div>
+</section>
+
+<section id="s72">
+  <p class="tag">Section 7.2</p>
+  <h2>Portfolios of two risky assets</h2>
+  <p>Put a share w<sub>D</sub> of your money in the bond fund and the rest, w<sub>E</sub> = 1 &minus; w<sub>D</sub>, in the stock fund. The portfolio&rsquo;s expected return is the weighted average of the two expected returns. Its risk is not the weighted average of the two &sigma;&rsquo;s, because the way the funds move together matters. That is the whole idea of diversification, and the three figures below show it from three angles.</p>
+  <div class="lab">
+    <h3>Lab: one portfolio, three figures</h3>
+    <div class="ctl">
+      <div class="row"><label for="s2w">Weight in stock fund, w(E)</label><input id="s2w" type="range" min="0" max="1" step="0.01" value="0.5"><output id="s2wv"></output></div>
+      <div class="row"><label for="s2r">Correlation of the two funds, &rho;</label><input id="s2r" type="range" min="-1" max="1" step="0.05" value="0.3"><output id="s2rv"></output></div>
+      <label class="chk"><input id="s2short" type="checkbox"> Allow short sales (weights below 0 or above 1)</label>
+    </div>
+    <div class="btns"><button class="btn" data-set="s2r:1">&rho; = +1</button><button class="btn" data-set="s2r:0.3">&rho; = 0.3 (the chapter)</button><button class="btn" data-set="s2r:0">&rho; = 0</button><button class="btn" data-set="s2r:-1">&rho; = &minus;1</button><button class="btn" id="s2min">Jump to the minimum-variance mix</button></div>
+    <div class="stats" id="s2stats"></div>
+    <div class="leg"><span><i class="sw" style="background:var(--accent)"></i>Your portfolio</span><span><i class="sw" style="background:var(--warm)"></i>Minimum-variance portfolio</span><span><i class="swd" style="border-color:var(--ink2)"></i>&rho; = +1 (no benefit)</span><span><i class="swl" style="border-color:var(--good)"></i>Efficient part (from the minimum up)</span></div>
+    <div class="grid2">
+      <div class="fig"><h4>Fig 7.3 &middot; expected return</h4><div class="plot" id="s2p3"></div></div>
+      <div class="fig"><h4>Fig 7.4 &middot; risk</h4><div class="plot" id="s2p4"></div></div>
+    </div>
+    <div class="fig" style="margin-top:14px;max-width:640px"><h4>Fig 7.5 &middot; the portfolio opportunity set</h4><div class="plot" id="s2p5"></div></div>
+  </div>
+
+  <div class="decode"><header>How to read it &middot; Figure 7.3</header><div class="steps">
+    <div><b>Axes</b><p>Horizontal: the weight in stocks, w(stocks). A second scale underneath shows the weight in bonds, w(bonds) = 1 &minus; w(stocks), running the other way. Vertical: expected return.</p></div>
+    <div><b>The line</b><p>It is straight because expected return is a weighted average. It starts at 8% for all bonds (w = 0) and ends at 13% for all stocks (w = 1).</p><p>Outside 0 to 1 you are selling one fund short to buy more of the other. With w(D) = 2 and w(E) = &minus;1 the expected return is 2&times;8 + (&minus;1)&times;13 = 3%.</p></div>
+    <div class="trap"><b>Watch out</b><p>Correlation does not appear anywhere in this figure. It changes risk, never expected return. That is why the next figure matters.</p></div>
+  </div></div>
+
+  <div class="decode"><header>How to read it &middot; Figure 7.4 (the confusing one)</header><div class="steps">
+    <div><b>Axes</b><p>Same horizontal axis as Figure 7.3 (weight in stocks). Vertical: portfolio standard deviation &sigma;.</p><p>Every curve passes through the same two points: &sigma; = 12% at w = 0 and &sigma; = 20% at w = 1. A single fund&rsquo;s risk does not depend on correlation, so the curves only differ in between.</p></div>
+    <div><b>The curves</b><p>&rho; = +1: a straight line between 12% and 20%. Risk is just the weighted average, so there is no diversification benefit.</p><p>&rho; = 0.30: the curve dips below 12% before climbing. The bottom, at about 18% in stocks, is the minimum-variance portfolio, with &sigma; = 11.45%. That is lower than either fund alone.</p><p>&rho; = 0: a deeper dip (10.29%). &rho; = &minus;1: a V that touches zero at w(E) = 0.375, a perfect hedge.</p></div>
+    <div class="trap"><b>Watch out</b><p>The bottom of the curve is the least risky mix. It is not the best mix, because it also gives up expected return.</p><p>The dip below 12% only appears when &rho; is below &sigma;<sub>D</sub>/&sigma;<sub>E</sub> = 0.6 (footnote 2 of the chapter). Try &rho; = 0.8 with short sales off and the minimum jumps to &ldquo;all bonds&rdquo;.</p></div>
+  </div></div>
+
+  <div class="decode"><header>How to read it &middot; Figure 7.5</header><div class="steps">
+    <div><b>Axes</b><p>Now the horizontal axis is risk (&sigma;) and the vertical axis is expected return. The weight axis is gone. Each point on the curve is one choice of w: read its return from Figure 7.3 and its &sigma; from Figure 7.4, and plot the pair.</p></div>
+    <div><b>The curve</b><p>The curve is the <i>portfolio opportunity set</i>: every risk and return pair you can reach by mixing the two funds. The two ends are D (all bonds) and E (all stocks). The leftmost point is the minimum-variance portfolio.</p><p>Above that point the curve is efficient (green): for each risk level it gives the most return. Below it, there is always a point directly above with the same risk and more return, so the lower part is inefficient.</p><p>Lower &rho; pushes the curve left, toward the northwest. At &rho; = +1 it collapses to the straight line D to E.</p></div>
+    <div class="trap"><b>Watch out</b><p>Figure 7.5 does not tell you which efficient point to pick. That depends on how much risk you can stomach, which is the topic of 7.3.</p><p>Readers often think the curve shows time. It does not. Moving along it only changes the weights.</p></div>
+  </div></div>
+</section>
+
+<section id="s73">
+  <p class="tag">Section 7.3</p>
+  <h2>Asset allocation with stocks, bonds and bills</h2>
+  <p>Now add a risk-free asset, T-bills yielding r<sub>f</sub>. Mixing T-bills with any risky portfolio traces a straight line, the <b>capital allocation line (CAL)</b>. Its slope is the <b>Sharpe ratio</b>: extra return per unit of risk, (E(r) &minus; r<sub>f</sub>) / &sigma;. A steeper CAL pays more for each unit of risk, so the best risky portfolio is the one with the steepest CAL. It is called <b>P</b>.</p>
+  <div class="lab">
+    <h3>Lab: find P, then choose how much of it to hold</h3>
+    <div class="ctl">
+      <div class="row"><label for="s3w">Your risky mix: weight in stocks</label><input id="s3w" type="range" min="0" max="1" step="0.01" value="0.18"><output id="s3wv"></output></div>
+      <div class="row"><label for="s3rf">T-bill rate, r<sub>f</sub></label><input id="s3rf" type="range" min="0" max="8" step="0.5" value="5"><output id="s3rfv"></output></div>
+      <div class="row"><label for="s3r">Correlation, &rho;</label><input id="s3r" type="range" min="-0.5" max="0.9" step="0.05" value="0.3"><output id="s3rv"></output></div>
+      <div class="row"><label for="s3a">Your risk aversion, A</label><input id="s3a" type="range" min="1" max="10" step="0.5" value="4"><output id="s3av"></output></div>
+    </div>
+    <div class="btns"><button class="btn" id="s3snap">Snap my mix to the optimal P</button><button class="btn" data-set="s3w:0.18">Minimum-variance mix (Portfolio A)</button><button class="btn" data-set="s3w:0.3">Portfolio B (30% stocks)</button></div>
+    <div class="stats" id="s3stats"></div>
+    <div class="leg"><span><i class="swl" style="border-color:var(--accent)"></i>Opportunity set</span><span><i class="swl" style="border-color:var(--good)"></i>CAL through P</span><span><i class="swd" style="border-color:var(--ink2)"></i>CAL through your mix</span><span><i class="swl" style="border-color:var(--warm)"></i>Indifference curve</span></div>
+    <div class="plot" id="s3plot"></div>
+    <h3>Where an investor with this A ends up</h3>
+    <div class="bars" id="s3bars"></div>
+    <p class="note" id="s3note"></p>
+  </div>
+
+  <div class="decode"><header>How to read it &middot; Figures 7.6 and 7.7</header><div class="steps">
+    <div><b>Axes</b><p>The same as Figure 7.5: risk on the horizontal axis, expected return on the vertical axis. The new point is r<sub>f</sub> on the vertical axis, where risk is zero.</p></div>
+    <div><b>The lines</b><p>Draw a line from r<sub>f</sub> through any risky portfolio. That is a CAL, and every point on it is a mix of T-bills and that portfolio. Figure 7.6 compares two: through portfolio A (82% bonds, 18% stocks, Sharpe 0.34) and through B (70% bonds, 30% stocks, Sharpe 0.38). B has the steeper line, so B beats A at every level of risk.</p><p>Keep rotating the line upward until it just touches the curve. The touching point is P: 40% bonds, 60% stocks, E(r) = 11%, &sigma; = 14.2%, Sharpe 0.42.</p></div>
+    <div class="trap"><b>Watch out</b><p>P is neither the minimum-variance portfolio nor the highest-return portfolio. It is the point with the steepest line from r<sub>f</sub>.</p><p>Try raising r<sub>f</sub> in the lab. P moves, because the tangent line pivots around a different starting point.</p></div>
+  </div></div>
+
+  <div class="decode"><header>How to read it &middot; Figures 7.8 and 7.9</header><div class="steps">
+    <div><b>Axes</b><p>Still risk against expected return. The new curve is an <i>indifference curve</i>: every point on it gives the investor the same satisfaction, U = E(r) &minus; &frac12;A&sigma;&sup2;.</p></div>
+    <div><b>The picture</b><p>The indifference curve bends upward, because taking on more risk needs more return to stay equally happy. The investor wants the highest curve that still touches the CAL. The touching point is C, the optimal complete portfolio.</p><p>The pie in Figure 7.9 splits C into T-bills, bonds and stocks. For A = 4: 25.61% bills, 29.76% bonds, 44.63% stocks.</p></div>
+    <div class="trap"><b>Watch out</b><p>Change A and watch the lab. C slides along the CAL, but P does not move. This is the <i>separation property</i>: everyone with the same inputs holds the same risky portfolio P. Only the split between P and T-bills depends on risk aversion.</p><p>If y is above 100%, the investor borrows at r<sub>f</sub> to buy more of P.</p></div>
+  </div></div>
+</section>
+
+<section id="s74">
+  <p class="tag">Section 7.4</p>
+  <h2>The Markowitz portfolio optimization model</h2>
+  <p>With many risky assets the problem has the same three parts as before. First, map the risk and return combinations you can build. Second, find the risky portfolio with the steepest CAL. Third, let each investor mix it with T-bills. The map in the first part is the <b>minimum-variance frontier</b>: for every target expected return, the lowest &sigma; you can reach. Its upper half, from the global minimum-variance portfolio upward, is the <b>efficient frontier</b>.</p>
+  <div class="lab">
+    <h3>Lab: the seven-country frontier from Appendix A</h3>
+    <p class="note" style="margin-top:0">Inputs are the risk premiums and covariance matrix in Spreadsheet 7A.1 (U.S., U.K., France, Germany, Australia, Japan, Canada). Short sales are allowed, so some weights are negative.</p>
+    <div class="ctl"><div class="row"><label for="s4m">Target risk premium</label><input id="s4m" type="range" min="3" max="8.5" step="0.05" value="4"><output id="s4mv"></output></div></div>
+    <div class="btns"><button class="btn" id="s4min">Global minimum-variance portfolio</button><button class="btn" id="s4tan">Optimal risky portfolio (steepest CAL)</button></div>
+    <div class="stats" id="s4stats"></div>
+    <div class="leg"><span><i class="swl" style="border-color:var(--good)"></i>Efficient frontier</span><span><i class="swd" style="border-color:var(--axis)"></i>Inefficient lower half</span><span><i class="swd" style="border-color:var(--ink2)"></i>CAL through P</span><span><i class="sw" style="background:var(--axis)"></i>One country index</span></div>
+    <div class="grid2">
+      <div class="fig"><div class="plot" id="s4plot"></div></div>
+      <div class="fig"><h4>Weights of the chosen portfolio</h4><div class="bars" id="s4bars"></div><p class="note">Bars to the left of the centre line are short positions. The weights always add to 100%.</p></div>
+    </div>
+    <p class="note">The covariances printed in the book are rounded to four decimals. The book&rsquo;s spreadsheet keeps more digits, so the tangency weights here differ from the book in the third decimal (U.S. about 69.7% here against 70.2% printed). The minimum-variance result matches the book exactly: &sigma; = 11.32%, risk premium 3.83%.</p>
+  </div>
+
+  <div class="decode"><header>How to read it &middot; Figures 7.10 to 7.13</header><div class="steps">
+    <div><b>Figure 7.10 &middot; the frontier</b><p>Each dot is one asset. The curve on the left edge is the minimum-variance frontier. Every single asset sits to the right, inside it, which is the lesson: holding one asset alone is inefficient, because a mix gets more return for less risk.</p><p>The dashed lower half is inefficient. Only the upper half, starting at the global minimum-variance portfolio, is the efficient frontier.</p></div>
+    <div><b>Figure 7.12 &middot; two ways to build it</b><p>Method one (squares): fix a required return, draw a horizontal line, and take the leftmost point on it, the smallest &sigma;. Your slider in the lab does exactly this. Method two (circles): fix a &sigma;, draw a vertical line, and take the highest point on it.</p><p>Both methods trace the same frontier. Every point comes with its weights, expected return and &sigma;.</p></div>
+    <div><b>Figures 7.11 and 7.13 &middot; the CAL</b><p>From r<sub>f</sub> draw lines to different points on the efficient frontier, such as A, G (the global minimum) and P. Each steeper line beats the one below it. The line that just touches the frontier is the CAL for P, and it dominates every other feasible line.</p><p>All clients with the same inputs get the same P (the separation property).</p></div>
+    <div class="trap"><b>Watch out</b><p>The picture is only as good as the input list: garbage in, garbage out. Using last few years&rsquo; average returns as forecasts is especially noisy: with &sigma; = 30% and ten years of data, the estimate of the mean has a standard error of 30/&radic;10 = 9.5%.</p><p>Each extra constraint (no short sales, a minimum dividend yield, SRI or ESG screens) moves the frontier inward and lowers the Sharpe ratio. Clients should know that cost.</p></div>
+  </div></div>
+
+  <div class="lab">
+    <h3>Lab: how many estimates does an analyst need to supply?</h3>
+    <div class="ctl"><div class="row"><label for="s4n">Number of securities covered, n</label><input id="s4n" type="range" min="2" max="100" step="1" value="50"><output id="s4nv"></output></div></div>
+    <div class="stats" id="s4count"></div>
+    <p class="note">The covariance matrix has n&times;n cells, but it is symmetric, so there are only n(n&minus;1)/2 different covariances. For 50 securities that is 1,225, which is the chapter&rsquo;s &ldquo;daunting task&rdquo;.</p>
+  </div>
+
+  <h3>Asset allocation and security selection</h3>
+  <p>The math is the same for both: build an efficient frontier and pick a point on it. The investment industry still separates them for organizational reasons. A large firm invests across several markets and asset classes that each need specialists, so each class is optimized on its own, while top management adjusts how much money each class receives.</p>
+</section>
+
+<section id="s75">
+  <p class="tag">Section 7.5</p>
+  <h2>Risk pooling, risk sharing and time diversification</h2>
+  <p>Many people argue that stocks become safe over long horizons: any single year can lose, but the market&rsquo;s positive risk premium should win over decades, so long-horizon investors can hold more stocks. The chapter says this is a misreading of how diversification works. To see why, start with an insurance company.</p>
+  <div class="lab">
+    <h3>Lab A: pooling versus sharing</h3>
+    <p class="note" style="margin-top:0">An insurer sells n identical fire policies. Each policy&rsquo;s payout has a standard deviation of $1,000 and the policies are uncorrelated.</p>
+    <div class="ctl"><div class="row"><label for="s5n">Number of policies, n</label><input id="s5n" type="range" min="1" max="100" step="1" value="25"><output id="s5nv"></output></div></div>
+    <div class="bars" id="s5bars"></div>
+    <p class="note" id="s5note"></p>
+  </div>
+  <div class="decode"><header>How to read it &middot; pooling and sharing</header><div class="steps">
+    <div><b>Pooling</b><p>Adding uncorrelated policies makes the <i>average</i> payout more predictable (&sigma;/&radic;n). But the <i>total</i> payout becomes more uncertain, because its standard deviation grows with &radic;n. Pooling alone does not make the owner safer.</p></div>
+    <div><b>Sharing</b><p>If the company sells shares so that n investors each own 1/n of the pool, each investor holds the average payout, and the risk per investor shrinks. Pooling plus sharing is the full business model of insurance.</p></div>
+    <div class="trap"><b>Watch out</b><p>Real diversification keeps your budget fixed and splits it up. Putting a second $100,000 into Amazon next to $100,000 in Microsoft adds risk. Splitting the first $100,000 across both reduces it.</p></div>
+  </div></div>
+
+  <div class="lab">
+    <h3>Lab B: does a longer horizon make stocks safe?</h3>
+    <p class="note" style="margin-top:0">Chapter assumptions: yearly returns are independent, mean 5%, standard deviation 30%, risk-free rate 0, continuously compounded, normal.</p>
+    <div class="ctl"><div class="row"><label for="s5t">Investment horizon, years</label><input id="s5t" type="range" min="1" max="30" step="1" value="10"><output id="s5tv"></output></div></div>
+    <div class="stats" id="s5stats"></div>
+    <div class="grid2">
+      <div class="fig"><h4>Chance of a positive return</h4><div class="plot" id="s5pA"></div></div>
+      <div class="fig"><h4>Loss in the 1% worst case</h4><div class="plot" id="s5pB"></div></div>
+    </div>
+    <h3>Table 7.5 recomputed</h3>
+    <div class="tw"><table id="s5table"></table></div>
+  </div>
+  <div class="decode"><header>How to read it &middot; Table 7.5 and the two charts</header><div class="steps">
+    <div><b>The pro-horizon argument</b><p>The standard deviation of the <i>average</i> yearly return falls as 30%/&radic;T, while its mean stays at 5%. So the chance that the average is positive climbs toward 100%. The left chart shows that rise: 56.6% after 1 year, 81.9% after 30.</p></div>
+    <div><b>The missing half</b><p>Your wealth depends on the <i>total</i> return, and its standard deviation grows as 30% &times; &radic;T. So the bad outcomes get worse. The right chart shows the loss in the worst 1% of cases: 47.7% of your money after 1 year, 90.2% after 30.</p></div>
+    <div class="trap"><b>Watch out</b><p>A higher probability of gain is not the same as a safer investment. Stretching the horizon is like adding policies without adding shareholders. True time diversification would mean putting only half as much in stocks each year for a 2-year plan, which halves the exposure to each year.</p></div>
+  </div></div>
+</section>
+
+<section id="ref">
+  <p class="tag">Reference</p>
+  <h2>Equations and terms</h2>
+  <h3>Key equations</h3>
+  <div class="eqs">
+    <div class="eq"><small>Eq. 7.2</small><code>E(r<sub>p</sub>) = w<sub>D</sub>E(r<sub>D</sub>) + w<sub>E</sub>E(r<sub>E</sub>)</code><p>Expected return is a weighted average. Correlation does not enter.</p></div>
+    <div class="eq"><small>Eq. 7.3</small><code>&sigma;<sub>p</sub>&sup2; = w<sub>D</sub>&sup2;&sigma;<sub>D</sub>&sup2; + w<sub>E</sub>&sup2;&sigma;<sub>E</sub>&sup2; + 2w<sub>D</sub>w<sub>E</sub>Cov(r<sub>D</sub>,r<sub>E</sub>)</code><p>Variance is not a weighted average. The covariance term is where diversification happens.</p></div>
+    <div class="eq"><small>Eq. 7.6</small><code>Cov(r<sub>D</sub>,r<sub>E</sub>) = &rho;<sub>DE</sub>&sigma;<sub>D</sub>&sigma;<sub>E</sub></code><p>Example: 0.30 &times; 12 &times; 20 = 72.</p></div>
+    <div class="eq"><small>Eq. 7.9 (&rho; = +1 only)</small><code>&sigma;<sub>p</sub> = w<sub>D</sub>&sigma;<sub>D</sub> + w<sub>E</sub>&sigma;<sub>E</sub></code><p>The only case where portfolio risk is the weighted average of the two risks.</p></div>
+    <div class="eq"><small>Eq. 7.12 (&rho; = &minus;1)</small><code>w<sub>D</sub> = &sigma;<sub>E</sub> / (&sigma;<sub>D</sub> + &sigma;<sub>E</sub>)</code><p>The perfect hedge: 20/32 = 0.625 in bonds gives zero risk.</p></div>
+    <div class="eq"><small>Footnote 3</small><code>w<sub>Min</sub>(D) = (&sigma;<sub>E</sub>&sup2; &minus; Cov) / (&sigma;<sub>D</sub>&sup2; + &sigma;<sub>E</sub>&sup2; &minus; 2Cov)</code><p>Minimum-variance weight. Example: (400 &minus; 72)/(144 + 400 &minus; 144) = 0.82.</p></div>
+    <div class="eq"><small>Sharpe ratio</small><code>S<sub>p</sub> = [E(r<sub>p</sub>) &minus; r<sub>f</sub>] / &sigma;<sub>p</sub></code><p>Slope of the CAL. Higher is better.</p></div>
+    <div class="eq"><small>Eq. 7.13</small><code>w<sub>D</sub> = [E(R<sub>D</sub>)&sigma;<sub>E</sub>&sup2; &minus; E(R<sub>E</sub>)Cov] / [E(R<sub>D</sub>)&sigma;<sub>E</sub>&sup2; + E(R<sub>E</sub>)&sigma;<sub>D</sub>&sup2; &minus; (E(R<sub>D</sub>) + E(R<sub>E</sub>))Cov]</code><p>Optimal risky portfolio P. R means excess return over r<sub>f</sub>.</p></div>
+    <div class="eq"><small>Eq. 7.14</small><code>y = [E(r<sub>P</sub>) &minus; r<sub>f</sub>] / (A&sigma;<sub>P</sub>&sup2;)</code><p>Share of wealth in P. Use decimals for returns and &sigma;.</p></div>
+    <div class="eq"><small>Eq. 7.15 and 7.16</small><code>&sigma;<sub>p</sub>&sup2; = &Sigma;<sub>i</sub>&Sigma;<sub>j</sub> w<sub>i</sub>w<sub>j</sub>Cov(r<sub>i</sub>,r<sub>j</sub>)</code><p>Portfolio variance for any number of assets, from the bordered covariance matrix.</p></div>
+    <div class="eq"><small>Eq. 7.20</small><code>&sigma;<sub>p</sub>&sup2; = (1/n)&sigma;&#772;&sup2; + ((n&minus;1)/n)Cov&#772;</code><p>Equal weights: average variance fades with n, average covariance stays.</p></div>
+    <div class="eq"><small>Eq. 7.21</small><code>&sigma;<sub>p</sub>&sup2; = (1/n)&sigma;&sup2; + ((n&minus;1)/n)&rho;&sigma;&sup2;</code><p>Same &sigma; and &rho; for all stocks. As n grows the variance approaches &rho;&sigma;&sup2;.</p></div>
+    <div class="eq"><small>Eq. 7.22 and 7.23</small><code>Var(&Sigma;x<sub>i</sub>) = n&sigma;&sup2;  and  Var(&Sigma;x<sub>i</sub>/n) = &sigma;&sup2;/n</code><p>Total payout gets riskier with n. Average payout gets safer.</p></div>
+    <div class="eq"><small>Time horizon T</small><code>SD(total) = &sigma;&radic;T  and  SD(average) = &sigma;/&radic;T</code><p>Why longer horizons raise total risk while average risk falls.</p></div>
+  </div>
+
+  <h3>Key terms in plain words</h3>
+  <dl class="gl">
+    <div><dt>Diversification</dt><dd>Splitting a fixed amount of money across many assets so no single source of risk dominates.</dd></div>
+    <div><dt>Insurance principle</dt><dd>Risk falls when many independent risks are spread out, as an insurer does with many policies.</dd></div>
+    <div><dt>Market, systematic, nondiversifiable risk</dt><dd>Risk from economy-wide factors that hit nearly every security. It remains after diversifying.</dd></div>
+    <div><dt>Unique, firm-specific, nonsystematic, diversifiable risk</dt><dd>Risk that belongs to one company and cancels out across many.</dd></div>
+    <div><dt>Short sale</dt><dd>Selling an asset you do not own. It gives a negative portfolio weight.</dd></div>
+    <div><dt>Portfolio opportunity set</dt><dd>All risk and return pairs you can reach by mixing the available assets.</dd></div>
+    <div><dt>Minimum-variance portfolio</dt><dd>The mix with the smallest possible standard deviation.</dd></div>
+    <div><dt>Minimum-variance frontier</dt><dd>For each target return, the lowest-variance portfolio, plotted as a curve.</dd></div>
+    <div><dt>Efficient frontier of risky assets</dt><dd>The upper part of the minimum-variance frontier, from the global minimum upward.</dd></div>
+    <div><dt>Input list</dt><dd>The expected returns, variances and covariances fed into the optimizer.</dd></div>
+    <div><dt>Capital allocation line (CAL)</dt><dd>All combinations of T-bills and one risky portfolio. Its slope is the Sharpe ratio.</dd></div>
+    <div><dt>Sharpe ratio</dt><dd>Extra return over the risk-free rate, per unit of standard deviation.</dd></div>
+    <div><dt>Optimal risky portfolio (P)</dt><dd>The risky mix with the highest Sharpe ratio, where the CAL touches the frontier.</dd></div>
+    <div><dt>Risk aversion (A)</dt><dd>How much return an investor demands to accept variance. Utility is U = E(r) &minus; &frac12;A&sigma;&sup2;.</dd></div>
+    <div><dt>Indifference curve</dt><dd>Risk and return pairs that give the investor equal satisfaction.</dd></div>
+    <div><dt>Separation property</dt><dd>Step one, finding P, is technical and the same for everyone. Step two, how much to hold in P, depends on risk aversion.</dd></div>
+    <div><dt>Risk pooling</dt><dd>Combining many independent risks in one pot.</dd></div>
+    <div><dt>Risk sharing</dt><dd>Splitting the pooled risk among many owners so each keeps a small slice.</dd></div>
+  </dl>
+
+  <h3>What to remember</h3>
+  <ul class="take">
+    <li>A portfolio&rsquo;s expected return is a weighted average. Its risk is not.</li>
+    <li>Unless two assets are perfectly correlated, combining them gives less risk than the weighted average of their risks. The lower the correlation, the bigger the gain.</li>
+    <li>An asset with negative correlation to the rest works as a hedge, and at &rho; = &minus;1 risk can reach zero.</li>
+    <li>The efficient frontier gives the highest expected return for each level of risk. Rational investors choose on it.</li>
+    <li>Different managers build different frontiers because their forecasts differ. Poor analysis can make an active portfolio worse than a plain index fund.</li>
+    <li>With a risk-free asset and identical inputs, every investor holds the same risky portfolio P and differs only in how much goes to T-bills.</li>
+    <li>True diversification divides a fixed budget. Putting more money at risk does not reduce dollar risk.</li>
+    <li>A longer horizon behaves like adding more bets. Total risk rises, so &ldquo;time diversification&rdquo; is an illusion.</li>
+    <li>Insurance works through pooling and sharing together.</li>
+  </ul>
+</section>
+</main>
+</div>
+
+<footer><div class="wrap">
+  <p>Based on Chapter 7 of Bodie, Kane and Marcus, <i>Investments</i> (McGraw-Hill), the edition assigned in class. Figures are redrawn from the chapter&rsquo;s own numbers, not copied. For the exact wording of definitions and the end-of-chapter problems, use the textbook.</p>
+</div></footer>
+<script>
+(function(){
+'use strict';
+var $=function(i){return document.getElementById(i)};
+var F=function(x,d){if(d==null)d=1;var s=Number(x).toFixed(d);return s.replace('-','−')};
+var PC=function(x,d){return F(x*100,d==null?0:d)+'%'};
+var uid=0;
+
+/* ---------- SVG chart builder ---------- */
+function mk(o){
+  var w=Math.max(260,Math.floor(o.el.clientWidth||600)),h=o.h||(w<460?250:300),L=44,R=14,T=10,B=40;
+  var pw=w-L-R,ph=h-T-B,id='c'+(++uid);
+  var X=function(v){return L+(v-o.x0)/(o.x1-o.x0)*pw},Y=function(v){return T+ph-(v-o.y0)/(o.y1-o.y0)*ph};
+  var s='<svg viewBox="0 0 '+w+' '+h+'" width="'+w+'" role="img" aria-label="'+(o.label||'Chart')+'"><defs><clipPath id="'+id+'"><rect x="'+L+'" y="'+T+'" width="'+pw+'" height="'+ph+'"/></clipPath></defs>';
+  (o.xt||[]).forEach(function(v){s+='<line class="g" x1="'+X(v)+'" x2="'+X(v)+'" y1="'+T+'" y2="'+(T+ph)+'"/><text x="'+X(v)+'" y="'+(T+ph+15)+'" text-anchor="middle">'+(o.xf?o.xf(v):v)+'</text>'});
+  (o.yt||[]).forEach(function(v){s+='<line class="g" x1="'+L+'" x2="'+(L+pw)+'" y1="'+Y(v)+'" y2="'+Y(v)+'"/><text x="'+(L-6)+'" y="'+(Y(v)+4)+'" text-anchor="end">'+(o.yf?o.yf(v):v)+'</text>'});
+  s+='<line class="ax" x1="'+L+'" x2="'+L+'" y1="'+T+'" y2="'+(T+ph)+'"/><line class="ax" x1="'+L+'" x2="'+(L+pw)+'" y1="'+(T+ph)+'" y2="'+(T+ph)+'"/>';
+  if(o.xl)s+='<text x="'+(L+pw/2)+'" y="'+(h-5)+'" text-anchor="middle">'+o.xl+'</text>';
+  if(o.yl)s+='<text transform="rotate(-90)" x="'+(-(T+ph/2))+'" y="12" text-anchor="middle">'+o.yl+'</text>';
+  var clip='',top='';
+  var c={
+    X:X,Y:Y,
+    band:function(a,b,cls){clip+='<rect class="'+(cls||'band')+'" x="'+X(a)+'" y="'+T+'" width="'+Math.max(0,X(b)-X(a))+'" height="'+ph+'"/>';return c},
+    path:function(pts,cls){var d='';pts.forEach(function(p,i){if(isFinite(p[0])&&isFinite(p[1]))d+=(d?'L':'M')+X(p[0]).toFixed(1)+' '+Y(p[1]).toFixed(1)});if(d)clip+='<path class="ln '+cls+'" d="'+d+'"/>';return c},
+    line:function(x0,y0,x1,y1,cls){clip+='<path class="ln '+cls+'" d="M'+X(x0).toFixed(1)+' '+Y(y0).toFixed(1)+'L'+X(x1).toFixed(1)+' '+Y(y1).toFixed(1)+'"/>';return c},
+    dot:function(x,y,cls,r){top+='<circle class="dt '+cls+'" cx="'+X(x).toFixed(1)+'" cy="'+Y(y).toFixed(1)+'" r="'+(r||5)+'"/>';return c},
+    txt:function(x,y,t,cls,anc,dx,dy){top+='<text class="'+(cls||'lb')+'" x="'+(X(x)+(dx||0)).toFixed(1)+'" y="'+(Y(y)+(dy||0)).toFixed(1)+'" text-anchor="'+(anc||'start')+'">'+t+'</text>';return c},
+    out:function(){o.el.innerHTML=s+'<g clip-path="url(#'+id+')">'+clip+'</g>'+top+'</svg>'}
+  };
+  return c;
+}
+function range(a,b,n){var r=[];for(var i=0;i<=n;i++)r.push(a+(b-a)*i/n);return r}
+function ticks(a,b,st){var r=[];for(var v=Math.ceil(a/st)*st;v<=b+1e-9;v+=st)r.push(Math.round(v*1000)/1000);return r}
+function bars(el,items,o){
+  o=o||{};var h='';
+  items.forEach(function(it){
+    var v=it.v,sc=it.scale||o.scale||1,cls=it.cls||'',st='';
+    if(o.center){var wd=Math.min(Math.abs(v)/sc,1)*50;st='left:'+(v>=0?50:50-wd)+'%;width:'+wd+'%';if(v<0)cls+=' neg'}
+    else st='left:0;width:'+Math.min(Math.abs(v)/sc,1)*100+'%';
+    h+='<div class="bar"><span>'+it.l+'</span><div class="track'+(o.center?' c':'')+'"><i class="'+cls+'" style="'+st+'"></i></div><span>'+it.t+'</span></div>';
+  });
+  el.innerHTML=h;
+}
+function stats(el,items){el.innerHTML=items.map(function(i){return '<div class="stat '+(i[2]||'')+'"><small>'+i[0]+'</small><b>'+i[1]+'</b></div>'}).join('')}
+function setNote(id,after,txt){var n=$(id);if(!n){n=document.createElement('p');n.className='note';n.id=id;$(after).insertAdjacentElement('afterend',n)}n.textContent=txt}
+
+var regs=[];function reg(f){regs.push(f)}
+function draw(){regs.forEach(function(f){try{f()}catch(e){if(window.console)console.error(e)}})}
+
+/* ---------- Table 7.1 data ---------- */
+var COV12=72;
+function sd2(w,r){var v=(1-w)*(1-w)*144+w*w*400+2*(1-w)*w*r*240;return Math.sqrt(Math.max(v,0))}
+function er2(w){return 8+5*w}
+function minWD(r){var c=240*r;return (400-c)/(544-2*c)}
+function optP(rf,r){
+  var c=240*r,n=(8-rf)*400-(13-rf)*c,d=(8-rf)*400+(13-rf)*144-(21-2*rf)*c,wd=n/d,we=1-wd;
+  return {wd:wd,we:we,E:8*wd+13*we,s:sd2(we,r)};
+}
+
+/* ---------- 7.1 ---------- */
+reg(function(){
+  var n=+$('s1n').value,r=+$('s1r').value;
+  $('s1nv').textContent=n;$('s1rv').textContent=F(r,2);
+  var sg=function(k,rr){return 50*Math.sqrt(1/k+(k-1)/k*rr)};
+  var sp=sg(n,r),fl=50*Math.sqrt(r),u=(1-r)/n*2500,m=r*2500,tot=u+m;
+  stats($('s1stats'),[['Portfolio σ',F(sp,1)+'%','hl'],['Floor as n grows (√ρ × 50%)',F(fl,1)+'%','warm'],['Unique-risk share of variance',PC(u/tot,0)],['Market-risk share of variance',PC(m/tot,0)]]);
+  var up=u/tot*100,mp=100-up;
+  $('s1split').className='split';
+  $('s1split').innerHTML='<span class="u" style="width:'+up+'%">unique '+F(up,0)+'%</span><span class="m" style="width:'+mp+'%">market '+F(mp,0)+'%</span>';
+  var ns=[];for(var k=1;k<=100;k++)ns.push(k);
+  var c=mk({el:$('s1plot'),x0:1,x1:100,y0:0,y1:50,xt:[1,20,40,60,80,100],yt:[0,10,20,30,40,50],xl:'Number of stocks, n',yl:'Portfolio σ (%)',label:'Portfolio standard deviation against number of stocks'});
+  c.path(ns.map(function(k){return [k,sg(k,0)]}),'r');
+  c.line(1,fl,100,fl,'w');
+  c.path(ns.map(function(k){return [k,sg(k,r)]}),'a');
+  c.dot(n,sp,'a',6);
+  c.txt(n,sp,F(sp,1)+'%','lba',n>70?'end':'start',n>70?-9:9,-9);
+  c.txt(100,fl,'floor '+F(fl,1)+'%','lbw','end',-4,-6);
+  c.out();
+});
+
+/* ---------- 7.2 ---------- */
+var s2short=false;
+function s2limits(){
+  var w=$('s2w'),sh=$('s2short').checked;
+  if(sh!==s2short){s2short=sh;w.min=sh?-0.5:0;w.max=sh?1.5:1;if(!sh)w.value=Math.min(1,Math.max(0,+w.value));}
+}
+function s2minW(){
+  var sh=$('s2short').checked,lo=sh?-0.5:0,hi=sh?1.5:1,we=1-minWD(+$('s2r').value);
+  return Math.min(hi,Math.max(lo,we));
+}
+reg(function(){
+  s2limits();
+  var sh=$('s2short').checked,lo=sh?-0.5:0,hi=sh?1.5:1;
+  var we=+$('s2w').value,r=+$('s2r').value,wd=1-we;
+  $('s2wv').textContent=F(we,2);$('s2rv').textContent=F(r,2);
+  var E=er2(we),s=sd2(we,r),s1=sd2(we,1),wm=s2minW(),sm=sd2(wm,r);
+  stats($('s2stats'),[['Expected return',F(E,2)+'%','hl'],['Standard deviation',F(s,2)+'%','hl'],['σ if ρ were +1',F(s1,2)+'%'],['Benefit of diversification',F(s1-s,2)+' pts','good'],['Weights','D '+PC(wd,0)+' / E '+PC(we,0)]]);
+  var raw=1-minWD(r),msg;
+  if(Math.abs(raw-wm)>1e-6)msg='At ρ = '+F(r,2)+' the unconstrained minimum-variance mix would need w(E) = '+F(raw,2)+', outside the allowed range, so the lowest-risk allowed mix is the end point w(E) = '+F(wm,2)+'.';
+  else msg='Minimum-variance mix at ρ = '+F(r,2)+': '+PC(1-wm,1)+' in D and '+PC(wm,1)+' in E, with σ = '+F(sm,2)+'%.';
+  setNote('s2msg','s2stats',msg);
+  var ws=range(lo,hi,100),xt=sh?[-0.5,0,0.5,1,1.5]:[0,0.25,0.5,0.75,1],xf=function(v){return F(v,2)};
+  var short=function(c){if(sh){c.band(-0.5,0,'band');c.band(1,1.5,'band')}};
+  // Fig 7.3
+  var a=mk({el:$('s2p3'),x0:lo,x1:hi,y0:sh?5:7,y1:sh?16:14,xt:xt,xf:xf,yt:sh?[6,8,10,12,14,16]:[7,8,9,10,11,12,13,14],yf:function(v){return v+'%'},xl:'Weight in stock fund E',yl:'Expected return',label:'Expected return against weight in stocks'});
+  short(a);a.path(ws.map(function(w){return [w,er2(w)]}),'a');
+  a.dot(0,8,'k');a.txt(0,8,'D 8%','lb','start',8,-8);a.dot(1,13,'k');a.txt(1,13,'E 13%','lb','end',-8,-8);
+  a.dot(we,E,'a',6);a.out();
+  // Fig 7.4
+  var smax=Math.max.apply(null,ws.map(function(w){return sd2(w,1)})),ym=Math.ceil(smax/5)*5;
+  var b=mk({el:$('s2p4'),x0:lo,x1:hi,y0:0,y1:ym,xt:xt,xf:xf,yt:ticks(0,ym,5),yf:function(v){return v+'%'},xl:'Weight in stock fund E',yl:'Standard deviation',label:'Standard deviation against weight in stocks'});
+  short(b);b.path(ws.map(function(w){return [w,sd2(w,1)]}),'r');
+  b.path(ws.map(function(w){return [w,sd2(w,r)]}),'a');
+  b.dot(wm,sm,'w',6);b.dot(we,s,'a',6);
+  b.txt(wm,sm,'min σ '+F(sm,1)+'%','lbw',wm>(lo+hi)/2?'end':'start',wm>(lo+hi)/2?-9:9,wm<0.05&&r>=0.6?-10:16);
+  b.out();
+  // Fig 7.5
+  var xs=ws.map(function(w){return sd2(w,r)}),xm=Math.max(25,Math.ceil(Math.max.apply(null,xs)/5)*5),ys=sh?[4,16]:[6,14];
+  var c=mk({el:$('s2p5'),x0:0,x1:xm,y0:ys[0],y1:ys[1],xt:ticks(0,xm,5),xf:function(v){return v+'%'},yt:ticks(ys[0],ys[1],2),yf:function(v){return v+'%'},xl:'Standard deviation',yl:'Expected return',h:320,label:'Portfolio opportunity set'});
+  c.path(ws.map(function(w){return [sd2(w,r),er2(w)]}),'d');
+  var eff=ws.filter(function(w){return w>=wm-1e-9});
+  if(eff.length)c.path(eff.map(function(w){return [sd2(w,r),er2(w)]}),'g');
+  c.dot(12,8,'k');c.txt(12,8,'D','lb','end',-9,4);c.dot(20,13,'k');c.txt(20,13,'E','lb','start',9,4);
+  c.dot(sm,er2(wm),'w',6);c.txt(sm,er2(wm),'min-variance','lbw','end',-9,16);
+  c.dot(s,E,'a',6);c.txt(s,E,'you','lba','start',9,-8);
+  c.out();
+});
+
+/* ---------- 7.3 ---------- */
+reg(function(){
+  var we=+$('s3w').value,rf=+$('s3rf').value,r=+$('s3r').value,A=+$('s3a').value;
+  $('s3wv').textContent=F(we,2);$('s3rfv').textContent=F(rf,1)+'%';$('s3rv').textContent=F(r,2);$('s3av').textContent=F(A,1);
+  var P=optP(rf,r),E=er2(we),s=sd2(we,r),sh=(E-rf)/s,shP=(P.E-rf)/P.s;
+  var y=((P.E-rf)/100)/(A*Math.pow(P.s/100,2)),EC=rf+y*(P.E-rf),sC=y*P.s;
+  stats($('s3stats'),[['Optimal risky P','D '+PC(P.wd,0)+' / E '+PC(P.we,0),'good'],['P: E(r) and σ',F(P.E,1)+'% / '+F(P.s,1)+'%','good'],['Sharpe ratio of P',F(shP,3),'good'],['Sharpe ratio of your mix',F(sh,3),'hl'],['Share y in P',PC(y,1),'warm'],['Complete portfolio',F(EC,1)+'% / '+F(sC,1)+'%','warm']]);
+  var ws=range(-0.5,1.5,100),pts=ws.map(function(w){return [sd2(w,r),er2(w)]});
+  var xm=Math.min(60,Math.max(25,Math.ceil(Math.max(sC*1.1,Math.max.apply(null,pts.map(function(p){return p[0]})))/5)*5));
+  var ym=Math.max(18,Math.ceil((EC+1)/2)*2);
+  var c=mk({el:$('s3plot'),x0:0,x1:xm,y0:0,y1:ym,xt:ticks(0,xm,5),xf:function(v){return v+'%'},yt:ticks(0,ym,2),yf:function(v){return v+'%'},xl:'Standard deviation',yl:'Expected return',h:340,label:'Capital allocation line and optimal complete portfolio'});
+  var u=EC-0.005*A*sC*sC;
+  c.path(range(0,xm,80).map(function(x){return [x,u+0.005*A*x*x]}),'w');
+  c.path(pts,'a');
+  c.line(0,rf,xm,rf+shP*xm,'g');
+  c.line(0,rf,xm,rf+sh*xm,'r');
+  c.dot(0,rf,'k');c.txt(0,rf,'rᶠ '+F(rf,1)+'%','lb','start',8,14);
+  c.dot(12,8,'m',4);c.txt(12,8,'D','','end',-8,4);c.dot(20,13,'m',4);c.txt(20,13,'E','','start',8,4);
+  c.dot(s,E,'a',6);c.txt(s,E,'your mix','lba','start',9,16);
+  c.dot(P.s,P.E,'g',7);c.txt(P.s,P.E,'P','lbg','end',-10,-6);
+  c.dot(sC,EC,'w',7);c.txt(sC,EC,'C','lbw','start',10,-6);
+  c.out();
+  bars($('s3bars'),[{l:'T-bills',v:1-y,t:PC(1-y,1),cls:'g'},{l:'Bonds (D)',v:y*P.wd,t:PC(y*P.wd,1)},{l:'Stocks (E)',v:y*P.we,t:PC(y*P.we,1)}],{center:true,scale:1.5});
+  var note=[];
+  if(P.we<0||P.we>1)note.push('P itself needs a short position ('+(P.we<0?'stocks':'bonds')+'), so your slider can’t reach it.');
+  if(y>1)note.push('y > 100%: the investor borrows at the T-bill rate to buy more of P.');
+  if(y<0)note.push('y is negative: P has a premium below zero here.');
+  if(Math.abs(we-P.we)<0.006)note.push('Your mix is P. Its Sharpe ratio is the highest on the chart.');
+  else note.push('Your mix has a '+(sh<shP?'lower':'higher')+' Sharpe ratio than P'+(sh<shP?', so a CAL through P lies above it. Whatever your A, you do better holding P plus bills.':'. That can only happen if your slider range allows more than P does.'));
+  note.push('Change A and watch C slide along the green line: P never moves (separation property).');
+  $('s3note').textContent=note.join(' ');
+  window._P3=P;
+});
+$('s3snap').addEventListener('click',function(){
+  var P=optP(+$('s3rf').value,+$('s3r').value),v=Math.min(1,Math.max(0,P.we));
+  $('s3w').value=v;$('s3w').dispatchEvent(new Event('input',{bubbles:true}));
+});
+
+/* ---------- 7.4 : seven countries ---------- */
+var NM=['US','UK','FR','DE','AU','JP','CA'];
+var S7=[[.0224,.0184,.0250,.0288,.0195,.0121,.0205],[.0184,.0223,.0275,.0299,.0204,.0124,.0206],[.0250,.0275,.0403,.0438,.0259,.0177,.0273],[.0288,.0299,.0438,.0515,.0301,.0183,.0305],[.0195,.0204,.0259,.0301,.0261,.0147,.0234],[.0121,.0124,.0177,.0183,.0147,.0353,.0158],[.0205,.0206,.0273,.0305,.0234,.0158,.0298]];
+var MU=[.060,.053,.070,.080,.058,.045,.059];
+function inv(M){var n=M.length,A=M.map(function(r,i){return r.concat(r.map(function(_,j){return i===j?1:0}))});
+  for(var i=0;i<n;i++){var p=i;for(var r=i+1;r<n;r++)if(Math.abs(A[r][i])>Math.abs(A[p][i]))p=r;var t=A[i];A[i]=A[p];A[p]=t;var d=A[i][i];for(var j=0;j<2*n;j++)A[i][j]/=d;for(r=0;r<n;r++)if(r!==i){var f=A[r][i];for(j=0;j<2*n;j++)A[r][j]-=f*A[i][j]}}
+  return A.map(function(r){return r.slice(n)})}
+var SI=inv(S7);
+function mv(M,v){return M.map(function(r){return r.reduce(function(s,x,j){return s+x*v[j]},0)})}
+var a1=mv(SI,MU.map(function(){return 1})),b1=mv(SI,MU);
+var QA=a1.reduce(function(s,x){return s+x},0),QB=b1.reduce(function(s,x){return s+x},0),QC=MU.reduce(function(s,x,i){return s+x*b1[i]},0),QD=QA*QC-QB*QB;
+function fW(m){return a1.map(function(x,i){return ((QC-QB*m)*x+(QA*m-QB)*b1[i])/QD})}
+function fS(m){return Math.sqrt(Math.max((QA*m*m-2*QB*m+QC)/QD,0))}
+var MMIN=QB/QA,MTAN=QC/QB;
+$('s4m').step=0.01;
+reg(function(){
+  var m=+$('s4m').value/100;
+  $('s4mv').textContent=F(m*100,2)+'%';
+  var w=fW(m),s=fS(m),neg=w.filter(function(x){return x<-0.0005}).length;
+  stats($('s4stats'),[['Risk premium',F(m*100,2)+'%','hl'],['Standard deviation',F(s*100,2)+'%','hl'],['Sharpe ratio',F(m/s,3),'good'],['Short positions',neg+' of 7']]);
+  var ms=range(0.025,0.09,130),up=ms.filter(function(x){return x>=MMIN}),dn=ms.filter(function(x){return x<=MMIN});
+  var c=mk({el:$('s4plot'),x0:0,x1:25,y0:0,y1:10,xt:[0,5,10,15,20,25],xf:function(v){return v+'%'},yt:[0,2,4,6,8,10],yf:function(v){return v+'%'},xl:'Standard deviation',yl:'Risk premium',h:340,label:'Efficient frontier of seven country indexes'});
+  c.line(0,0,25,Math.sqrt(QC)*25,'g');
+  c.path(dn.map(function(x){return [fS(x)*100,x*100]}),'f');
+  c.path(up.map(function(x){return [fS(x)*100,x*100]}),'a');
+  c.line(0,m*100,25,m*100,'f');
+  var off={US:[8,-6,'start'],UK:[-8,14,'end'],FR:[8,14,'start'],DE:[8,-6,'start'],AU:[-8,-8,'end'],JP:[8,14,'start'],CA:[-8,14,'end']};
+  NM.forEach(function(k,i){var sd=Math.sqrt(S7[i][i])*100,o=off[k];c.dot(sd,MU[i]*100,'m',4);c.txt(sd,MU[i]*100,k,'',o[2],o[0],o[1])});
+  c.dot(Math.sqrt(1/QA)*100,MMIN*100,'w',6);c.dot(Math.sqrt(QC)/QB*100,MTAN*100,'g',7);c.txt(Math.sqrt(QC)/QB*100,MTAN*100,'P','lbg','start',10,-8);
+  c.dot(s*100,m*100,'a',6);c.out();
+  bars($('s4bars'),w.map(function(x,i){return {l:NM[i],v:x,t:PC(x,1)}}),{center:true,scale:1.5});
+});
+$('s4min').addEventListener('click',function(){$('s4m').value=(MMIN*100).toFixed(2);$('s4m').dispatchEvent(new Event('input',{bubbles:true}))});
+$('s4tan').addEventListener('click',function(){$('s4m').value=(MTAN*100).toFixed(2);$('s4m').dispatchEvent(new Event('input',{bubbles:true}))});
+reg(function(){
+  var n=+$('s4n').value;$('s4nv').textContent=n;
+  var cv=n*(n-1)/2;
+  stats($('s4count'),[['Expected returns',n.toLocaleString()],['Variances',n.toLocaleString()],['Covariances, n(n−1)/2',cv.toLocaleString(),'warm'],['Total estimates',(2*n+cv).toLocaleString(),'hl']]);
+});
+
+/* ---------- 7.5 ---------- */
+function erf(x){var s=x<0?-1:1;x=Math.abs(x);var t=1/(1+0.3275911*x);var y=1-(((((1.061405429*t-1.453152027)*t)+1.421413741)*t-0.284496736)*t+0.254829592)*t*Math.exp(-x*x);return s*y}
+function Phi(z){return 0.5*(1+erf(z/Math.SQRT2))}
+function hz(T){var m=0.05*T,s=0.3*Math.sqrt(T),v1=m-2.3263*s,v2=m-3.0902*s;
+  return {m:m,s:s,z:m/s,p:Phi(m/s),avg:0.3/Math.sqrt(T),v1:v1,l1:1-Math.exp(v1),v2:v2,l2:1-Math.exp(v2)}}
+var $$=function(x){return '$'+Math.round(x).toLocaleString()};
+reg(function(){
+  var n=+$('s5n').value;$('s5nv').textContent=n;
+  var tot=1000*Math.sqrt(n),per=1000/Math.sqrt(n);
+  bars($('s5bars'),[{l:'Pooling: SD of total claims',v:tot,scale:10000,t:$$(tot),cls:'g'},{l:'Sharing: SD per investor',v:per,scale:1000,t:$$(per)}]);
+  $('s5note').textContent='With '+n+' independent policies the insurer’s total risk is '+$$(tot)+': it grows with √n, not n. Split among '+n+' investors, each carries '+$$(per)+'. Pooling alone doesn’t make risk small; sharing the pool does. (Each policy: SD $1,000.)';
+  var T=+$('s5t').value;$('s5tv').textContent=T+(T===1?' year':' years');
+  var h=hz(T);
+  stats($('s5stats'),[['Chance of a positive return',PC(h.p,1),'good'],['SD of total return',F(h.s*100,1)+'%','hl'],['SD of average annual return',F(h.avg*100,1)+'%','warm'],['Wealth loss in the 1% worst case',h.l1>0?PC(h.l1,0):'none','warm']]);
+  var Ts=[];for(var k=1;k<=30;k++)Ts.push(k);
+  var a=mk({el:$('s5pA'),x0:1,x1:30,y0:50,y1:100,xt:[1,5,10,15,20,25,30],yt:[50,60,70,80,90,100],yf:function(v){return v+'%'},xl:'Horizon T (years)',yl:'P(total return > 0)',h:250,label:'Probability of a positive return against horizon'});
+  a.path(Ts.map(function(t){return [t,hz(t).p*100]}),'g');a.dot(T,h.p*100,'g',6);a.out();
+  var b=mk({el:$('s5pB'),x0:1,x1:30,y0:0,y1:100,xt:[1,5,10,15,20,25,30],yt:[0,20,40,60,80,100],yf:function(v){return v+'%'},xl:'Horizon T (years)',yl:'Loss at 1% worst case',h:250,label:'Wealth loss in the 1% worst case against horizon'});
+  b.path(Ts.map(function(t){return [t,Math.max(0,hz(t).l1*100)]}),'w');b.dot(T,Math.max(0,h.l1*100),'w',6);b.out();
+  var cols=[1,10,30,T],H=cols.map(hz);
+  var rows=[
+    ['Mean total return (cont. compounded)',function(x,t){return F(x.m*100,0)+'%'}],
+    ['SD of total return',function(x){return F(x.s*100,1)+'%'}],
+    ['Mean ÷ SD (z-score)',function(x){return F(x.z,2)}],
+    ['Chance total return is positive',function(x){return PC(x.p,1)}],
+    ['SD of average annual return',function(x){return F(x.avg*100,1)+'%'}],
+    ['1% worst-case total return (cont. comp.)',function(x){return F(x.v1*100,0)+'%'}],
+    ['1% worst-case wealth loss',function(x){return x.l1>0?PC(x.l1,0):'none'}],
+    ['0.1% worst-case total return (cont. comp.)',function(x){return F(x.v2*100,0)+'%'}],
+    ['0.1% worst-case wealth loss',function(x){return x.l2>0?PC(x.l2,0):'none'}]];
+  $('s5table').innerHTML='<thead><tr><th>Measure</th><th>T = 1</th><th>T = 10</th><th>T = 30</th><th>Your T = '+T+'</th></tr></thead><tbody>'+rows.map(function(r){return '<tr><td>'+r[0]+'</td>'+H.map(function(x){return '<td>'+r[1](x)+'</td>'}).join('')+'</tr>'}).join('')+'</tbody>';
+});
+
+/* ---------- wiring ---------- */
+document.querySelectorAll('input[type=range],input[type=checkbox]').forEach(function(el){el.addEventListener('input',draw);el.addEventListener('change',draw)});
+document.querySelectorAll('[data-set]').forEach(function(b){b.addEventListener('click',function(){
+  var p=b.getAttribute('data-set').split(':'),el=$(p[0]);if(!el)return;el.value=p[1];el.dispatchEvent(new Event('input',{bubbles:true}))})});
+$('s2min').addEventListener('click',function(){$('s2w').value=s2minW().toFixed(2);$('s2w').dispatchEvent(new Event('input',{bubbles:true}))});
+var lw=window.innerWidth,tk=0;
+window.addEventListener('resize',function(){if(tk)return;tk=requestAnimationFrame(function(){tk=0;if(window.innerWidth!==lw){lw=window.innerWidth;draw()}})});
+var st=document.createElement('style');st.textContent='nav.side a.on{background:var(--accent-soft);color:var(--accent)}';document.head.appendChild(st);
+try{
+  var links=[].slice.call(document.querySelectorAll('nav.side a')),secs=links.map(function(a){return document.querySelector(a.getAttribute('href'))});
+  var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){var i=secs.indexOf(e.target);links.forEach(function(a,j){a.classList.toggle('on',j===i)})}})},{rootMargin:'-20% 0px -70% 0px'});
+  secs.forEach(function(s){if(s)io.observe(s)});
+}catch(e){}
+draw();
+})();
+</script>
+
+</body></html>
